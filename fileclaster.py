@@ -40,32 +40,44 @@ def str_content(path):
     content = os.path.abspath(path) + '\n'
     isdir = ''
     index = 0
-
     for i in os.listdir(path):
         if os.path.isdir(path + '\\' + i):
             isdir = '<DIR>'
         else:
-            isdir = '\t'
+            isdir = str(os.path.getsize(path + '\\' + i)) + 'B'
         content += str(index) + '.  ' + isdir  + '\t' + i + '\n'
         index += 1
     return content
 
 #       Обходит дерево каталогов, начиная с корневого
-def bypass(path, level = 0):
-    size = 0
-    filecount = 0
-    print(str_content(path))
-    #print('Level', str(level) + ':', 'Content:', os.listdir(path))
+filecount = 0
+def bypass(path, size = 0):
+    global filecount
+    try:
+        print(str_content(path))
+        None
+    except PermissionError: None
+
+    current = 0
     for file in os.listdir(path):
-        if os.path.isdir(path + '\\' + file):
-            print('Down to: ', file)
-            bypass(path + '\\' + file, level + 1)
-            print('Up to: ', path)
-        else:
-            size += os.path.getsize(file)
-    return size / filecount
+        try:
+            if os.path.isdir(path + '\\' + file):
+                print('\tDown to: ', file)
+                size = bypass(path + '\\' + file, size)
+                print('\tUp to: ', path)
+            else:
+                current = os.path.getsize(path + '\\' + file)
+                filecount += 1
+                size += current
+            print(size)
+        except PermissionError: continue
+    return size
 
-
-
+def sbytes(bytes):
+    return bytes / filecount
 #           Зона глобальной видимости
-print(bypass(path))
+bytes = bypass(path)
+
+print('\n')
+print(get_kib(sbytes(bytes)))
+#print((1746 + 9307472 + 12242 + 652601 + 282))
