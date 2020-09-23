@@ -52,6 +52,8 @@ def str_content(path):
 
 #       Обходит дерево каталогов, начиная с корневого
 def bypass(path, level = 0):
+    size = 0
+    filecount = 0
     print(str_content(path))
     #print('Level', str(level) + ':', 'Content:', os.listdir(path))
     for file in os.listdir(path):
@@ -59,9 +61,11 @@ def bypass(path, level = 0):
             print('Down to: ', file)
             bypass(path + '\\' + file, level + 1)
             print('Up to: ', path)
-        
+        else:
+            size += os.path.getsize(file)
+    return size / filecount
 
 
 
 #           Зона глобальной видимости
-bypass(path)
+print(bypass(path))
