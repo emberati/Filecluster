@@ -12,11 +12,13 @@ path = argv[len(argv) - 1]
     # -> path = str(os.path.dirname(__file__)) + "\\" + str(path)
 
 
-def get_mib(size_in_bytes):
+def get_in_mb(size_in_bytes):
     return size_in_bytes / pow(1024, 2)
 
-def get_kib(size_in_bytes):
+
+def get_in_kib(size_in_bytes):
     return size_in_bytes / 1024
+
 
 #=============================================================================#
 #                                 Обход папок                                 #
@@ -84,4 +86,8 @@ for i in sysdir:
 
 print()
 bytes = sbytes(bytes)
-print('Average file size', str(round(get_kib(bytes), 2)) + 'KB')
+print('Average file size', str(round(get_in_kib(bytes), 2)) + 'KB')
+
+
+if __name__ == '__main__':
+    pass
