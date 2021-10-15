@@ -1,5 +1,5 @@
 import os
-from cmdparse import path
+import config
 from json import JSONEncoder, JSONDecoder
 
 
@@ -12,13 +12,22 @@ def get_in_kib(size_in_bytes):
 
 
 class Session:
+    """
+    Session object stores result values after scanning specified directory, such as summary size of all scanned files,
+    count of scanned files, or skipped files (because of PermissionError).
+
+    In other words, it's stores result of scanning one directory. One Session obj - one directory.
+    """
     count_of_files          = None
     overall_size            = None
     count_of_skipped_files  = None
     skipped_files           = None
 
-    def __init__(self, __path__):
+    def __init__(self, __path__: str):
         self.path = __path__
+
+    def get_statistics(self):
+        pass
 
 
 class SessionEncoder(JSONEncoder):
@@ -30,7 +39,22 @@ class SessionDecoder(JSONDecoder):
 
 
 class FileCluster:
-    pass
+    sessions = []
+
+    def __init__(self):
+        path = config.get_path()
+        self.create_session(path)
+
+    def scan(self, fast=True):
+        for session in self.sessions:
+            session.overall_size = bypass(session.path)
+
+
+    def create_session(self, path: str):
+        self.sessions.append(Session(path))
+
+    def save_session(self, session_id: int):
+        pass
 
 
 # ============================================================================= #
@@ -67,7 +91,6 @@ def bypass(path, size=0):
     global skipped
     global sysdir
 
-    current = 0
     for file in os.listdir(path):
         node = path + '\\' + file
         try:
@@ -76,9 +99,9 @@ def bypass(path, size=0):
                 size = bypass(node, size)
                 print('\tUp to: ', path)
             else:
-                current = os.path.getsize(node)
+                node_size = os.path.getsize(node)
                 filecount += 1
-                size += current
+                size += node_size
         except PermissionError:
             sysdir.append(node)
             skipped += 1
@@ -90,24 +113,9 @@ def average_file_size(bytes):
     return bytes / filecount
 
 
-#           Зона глобальной видимости
-def main_old():
-    bytes = bypass(path)
-
-    print()
-    print('Analyzed data size:', str(bytes) + 'B')
-    print('Files:', filecount, '\n')
-    print('Skipped system directories:', skipped)
-
-    for i in sysdir:
-        print(i)
-
-    print()
-    bytes = average_file_size(bytes)
-    print('Average file size', str(round(get_in_kib(bytes), 2)) + 'KB')
-
-
+# Зона глобальной видимости
 def main_new():
+    path = config.get_path()
     s = Session(path)
     size = bypass(s.path)
 
@@ -124,5 +132,4 @@ def main_new():
 
 
 if __name__ == '__main__':
-    # main_old()
     main_new()
