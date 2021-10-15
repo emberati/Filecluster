@@ -1,5 +1,5 @@
 import os
-import config
+from config import config
 from json import JSONEncoder, JSONDecoder
 
 
@@ -18,16 +18,40 @@ class Session:
 
     In other words, it's stores result of scanning one directory. One Session obj - one directory.
     """
-    count_of_files          = None
-    overall_size            = None
-    count_of_skipped_files  = None
-    skipped_files           = None
+    count_of_files          = 0
+    overall_size            = 0
+    count_of_skipped_files  = 0
+    skipped_files           = []
 
     def __init__(self, __path__: str):
         self.path = __path__
 
-    def get_statistics(self):
-        pass
+    def bypass(self, path, size=0):
+        #    try:
+        #        print(str_content(path))
+        #        None
+        #    except PermissionError: None
+
+        for file in os.listdir(path):
+            node = path + '\\' + file
+            try:
+                if os.path.isdir(node):
+                    print('\tDown to: ', file)
+                    self.bypass(node, size)
+                    print('\tUp to: ', path)
+                else:
+                    node_size = os.path.getsize(node)
+                    self.count_of_files += 1
+                    self.overall_size += node_size
+            except PermissionError:
+                self.skipped_files.append(node)
+                self.count_of_skipped_files += 1
+                continue
+
+    def __repr__(self):
+        return f'Analyzed data size: {self.overall_size}B \n' \
+               f'Files: {self.count_of_files} \n' \
+               f'Skipped directories: {self.count_of_skipped_files}'
 
 
 class SessionEncoder(JSONEncoder):
@@ -39,19 +63,11 @@ class SessionDecoder(JSONDecoder):
 
 
 class FileCluster:
-    sessions = []
-
     def __init__(self):
-        path = config.get_path()
-        self.create_session(path)
+        self.session = Session(config.path)
 
-    def scan(self, fast=True):
-        for session in self.sessions:
-            session.overall_size = bypass(session.path)
-
-
-    def create_session(self, path: str):
-        self.sessions.append(Session(path))
+    def scan(self):
+        self.session.bypass(self.session.path)
 
     def save_session(self, session_id: int):
         pass
@@ -76,59 +92,13 @@ class FileCluster:
 #        index += 1
 #    return content
 
-#       Обходит дерево каталогов, начиная с корневого
-filecount = 0
-skipped = 0
-sysdir = []
-
-
-def bypass(path, size=0):
-#    try:
-#        print(str_content(path))
-#        None
-#    except PermissionError: None
-    global filecount
-    global skipped
-    global sysdir
-
-    for file in os.listdir(path):
-        node = path + '\\' + file
-        try:
-            if os.path.isdir(node):
-                print('\tDown to: ', file)
-                size = bypass(node, size)
-                print('\tUp to: ', path)
-            else:
-                node_size = os.path.getsize(node)
-                filecount += 1
-                size += node_size
-        except PermissionError:
-            sysdir.append(node)
-            skipped += 1
-            continue
-    return size
-
-
-def average_file_size(bytes):
-    return bytes / filecount
-
-
 # Зона глобальной видимости
 def main_new():
-    path = config.get_path()
-    s = Session(path)
-    size = bypass(s.path)
-
-    print('Analyzed data size:', str(size) + 'B')
-    print('Files:', filecount, '\n')
-    print('Skipped system directories:', skipped)
-
-    for i in sysdir:
-        print(i)
-
+    fc = FileCluster()
+    fc.scan()
+    print(fc.session)
     print()
-    av = average_file_size(size)
-    print('Average file size', str(round(get_in_kib(av), 2)) + 'KB')
+    print('Average file size', str(round(fc.session.overall_size / fc.session.count_of_files, 2)) + 'KB')
 
 
 if __name__ == '__main__':
