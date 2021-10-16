@@ -11,14 +11,16 @@ def create_parser():
     parser.add_argument(  # Adding into parser an argument, which will be expected in command line
         '-d', '--dir', required=False, default=os.getcwd()  # Getting current working directory
     )  # It's able to change <required> to True, to make almost one argument required for command (In this case dir)
-    parser.add_argument('-f', '--fast', required=False, default=False)
+    parser.add_argument('-D', '--deep', required=False, default=False)  # Deep scan
+    parser.add_argument('-r', '--recommend', required=False)  # Recommendation by speed or efficiency
     return parser
 
 
 class Config:
     def __init__(self, args: Namespace):
-        self.fast_scanning = args.fast
+        self.deep = args.deep
         self.path = args.dir
+        self.recommend = args.recommend
 
 
 __parser__  = create_parser()
